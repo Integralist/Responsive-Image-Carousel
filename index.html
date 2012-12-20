@@ -24,7 +24,7 @@
             var container_dimensions = container.dim(); // e.g. { height: 610, width: 960 }
             var slide_dimensions = carousel.find('img').eq(0).dim(); // e.g. { height: 605, width: 960 }
             var current_position = 0;
-            var slides, total_container_width;
+            var slides, total_container_width, last_frame_position;
 
             // Insert our pagination buttons (these will move the carousel forward and backwards)
             container.append('<span class="carousel__pagination carousel__pagination--prev">&#9664;</span><span class="carousel__pagination carousel__pagination--next">&#9654;</span>');
@@ -58,6 +58,9 @@
             // While we're here lets now store the total container width (this is the width of all slides horizontally added up)
             total_container_width = slide_dimensions.width * slides.length;
 
+            // We end up calculating the last frame position a couple of times so I decided to cache the value
+            last_frame_position = -(total_container_width - slide_dimensions.width);
+
             // We now need to loop through each slide (<li>) and position them horizontally next to each other.
             slides.each(function (item, index) {
                 // Skip the first slide
@@ -89,7 +92,7 @@
                     If the position value is less than the minus value of the total width of the carousel (that's a mouthful) then we know we would be going past the last slide if we were to animate now.
                     So what we want to do here is reposition the carousel so the first slide (which is a clone of the last slide) is the visible slide and THEN we can start the animation.
                  */
-                if (current_position < -(total_container_width - slide_dimensions.width)) {
+                if (current_position < last_frame_position) {
                     return false;
                 }
 
@@ -107,8 +110,8 @@
             function reposition (show_previous) {
                 if (show_previous) {
                     // Reposition to the last slide and reset the current position value
-                    carousel.css('left', -(total_container_width - slide_dimensions.width));
-                    current_position = -(total_container_width - slide_dimensions.width);
+                    carousel.css('left', last_frame_position);
+                    current_position = last_frame_position;
                 } else {
                     // Reposition to the first slide and reset the current position value
                     carousel.css('left', 0);
@@ -164,8 +167,6 @@
 
             // Set-up the event listeners for the pagination buttons
             setup_listeners();
-
-            //
 
             /*
                 TODO: 
