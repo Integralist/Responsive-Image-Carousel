@@ -1,0 +1,118 @@
+<!doctype html>
+<html dir="ltr" lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Responsive Carousel</title>
+        <link rel="stylesheet" href="main.css">
+        <link rel="stylesheet" href="carousel.css">
+    </head>
+    <body>
+        <div class="carousel">
+            <ul class="carousel__slides">
+                <li><img src="images/A.jpg"></li>
+                <li><img src="images/B.jpg"></li>
+                <li><img src="images/C.jpg"></li>
+                <li><img src="images/D.jpg"></li>
+            </ul>
+        </div>
+        
+        <script src="ender.js"></script>
+        <script>
+            var container = $('.carousel');
+            var carousel = $('.carousel__slides');
+            var container_dimensions = container.dim(); // e.g. { height: 610, width: 960 }
+            var slide_dimensions = carousel.find('img').eq(0).dim(); // e.g. { height: 605, width: 960 }
+            var current_position = 0;
+            var slides, total_container_width;
+
+            // Insert our pagination buttons (these will move the carousel forward and backwards)
+            container.append('<span class="carousel__pagination carousel__pagination--prev">&#9664;</span><span class="carousel__pagination carousel__pagination--next">&#9654;</span>');
+
+            /*
+                Here is a slightly more readable look at the pagination buttons HTML we're generating and appending to the carousel...
+
+                <span class="carousel__pagination carousel__pagination--prev">&#9664;</span>
+                <span class="carousel__pagination carousel__pagination--next">&#9654;</span>
+             */
+
+            // Here we're letting the CSS know JavaScript is enabled and so it can start applying JavaScript specific style changes
+            carousel.addClass('carousel__slides--js');
+
+            // The <li>'s are set to `position:absolute` in the CSS which means the height of the container needs to be set to whatever the image height is
+            container.height(slide_dimensions.height);
+
+            /*
+                To make the carousel animate the next slide into view we need to reposition the `carousel` <ul> `left` position.
+                But first we need to duplicate the first slide and place it at the end of the current set of slides.
+                The reason we do this is because if the user is on the last slide and presses 'next' we can show the first slide again and then reposition the whole carousel to the first slide.
+                It's a "sleight of hand" so the user thinks the carousel is moving seamlessly.
+
+                NOTE: we're using a modified version of Bonzo (within Ender) that adds a `clone` method.
+             */
+            carousel.append(carousel.find('li').eq(0).clone());
+
+            // Now we have a longer set of slides (because of the cloned slide) we can cache all slides for any further usage
+            slides = carousel.find('li');
+
+            // While we're here lets now store the total container width (this is the width of all slides horizontally added up)
+            total_container_width = slide_dimensions.width * slides.length;
+
+            // We now need to loop through each slide (<li>) and position them horizontally next to each other.
+            slides.each(function (item, index) {
+                // Skip the first slide
+                if (index > 0) {
+                    // Position each slide horizontally (wont be visible as the container element is set to `overflow:hidden`)
+                    $(item).css('left', slide_dimensions.width * index);
+                }
+            });
+
+            /*
+             * Function that handles the movement of our carousel.
+             * 
+             * @param e {object} normalised event object
+             * @param show_previous {boolean} if set to true then the carousel will move backwards
+             * @return undefined {undefined} no explicit return value
+             */
+            function move (e, show_previous) {
+                // Remove the event listeners (thus preventing the user from mashing the buttons at an obscene rate and causing odd rendering to occur)
+                container.off('click');
+
+                // Determines if we're moving backwards or forwards and updates `current_position`
+                var direction = (show_previous) ? current_position -= slide_dimensions.width : current_position += slide_dimensions.width;
+                
+                carousel.animate({ 
+                    duration: 500,
+                    left: current_position,
+                    complete: setup_listeners
+                });
+            }
+
+            /*
+             * Because we're removing the listeners whilst the animation is happening
+             * (this is so the user can't keep pressing the buttons like a lunatic)
+             * we need to re-add them again once the animation is complete.
+             * No point having the same code twice so we just stick it inside a function we can call however often we need to.
+             * 
+             * @return undefined {undefined} no explicit return value
+             */
+            function setup_listeners(){
+                container.on('click', '.carousel__pagination--prev', move, true);
+                container.on('click', '.carousel__pagination--next', move);
+            }
+
+            // Set-up the event listeners for the pagination buttons
+            setup_listeners();
+
+            //
+
+            /*
+                TODO: 
+
+                - values need to be updated when the screen is resized or orientation is changed (so check carousel is truly 'responsive')
+                - add touch interaction so not reliant on a mouse
+                - remove JS/DOM animation interaction for browsers that support CSS3 animations/transitions
+             */
+        </script>
+    </body>
+</html>

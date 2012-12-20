@@ -1,0 +1,52 @@
+.carousel {
+    margin: auto;
+    max-width: 60em; /* 960px / 16px <body> font size = 60 */
+    overflow: hidden; /* Used to hide the overflowing <li>'s when they are positioned absolutely */
+    position: relative; /* Used to contain absolutely positioned pagination buttons */
+}
+
+.carousel__slides {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.carousel__slides img {
+    width: 100%;
+}
+
+.carousel__slides li ~ li {
+    display: none; /* Don't assume JavaScript is enabled. For non-JS users we'll just display the first <li> */
+}
+
+.carousel__slides--js {
+    left: 0; /* We visually don't need to set this property, but Morpheus (the animation library) wont work unless there is a style set which it can manipulate */
+    position: relative; /* We will use JavaScript to set the `left` position of this carousel */
+}
+
+.carousel__slides--js li {
+    display: block !important; /* It's OK to use an !important statement for a modifier class as a modifier normally needs to have the power to overide previous settings */
+    left: 0;
+    position: absolute;
+    width: 100%; /* Needs to be set otherwise the images shrink down to almost half the space available */
+}
+
+/* The pagination is styled here but the HTML isn't inserted into the page until the required JavaScript has loaded */
+
+.carousel__pagination {
+    cursor: pointer;
+    font-size: 2.5em;
+    height: 50px;
+    margin-top: -25px;
+    position: absolute;
+    top: 50%;
+    width: 50px;
+}
+
+.carousel__pagination--prev {
+    margin-left: .3em; /* The font size pushes out more the 'next' arrow, which means we need to compensate here */
+}
+
+.carousel__pagination--next {
+    right: 0;
+}
