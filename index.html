@@ -68,6 +68,61 @@
             });
 
             /*
+             * Before we start the animating the next slide into view we check to see if we're at the beginning or end of the set of slides.
+             * If we're not at the start/end we return true so the calling function knows it can start the required animation.
+             * But if we're at the start or end then we return false so the calling function knows to execute the relevant repositioning function.
+             * Note: The `current_position` variable value is updated BEFORE we begin animating the position.
+             * 
+             * @param show_previous {boolean} tells us whether the user wants to move forwards or backwards through the carousel
+             * @return true|false {boolean} returns true or false depending on results of the function
+             */
+            function check_movement (show_previous) {
+                /*
+                    If the position value is the width of one slide then we know we're on the first slide 
+                    and need to reposition to the last slide before we start the animation.
+                 */
+                if (show_previous && current_position === slide_dimensions.width) {
+                    return false;
+                } 
+
+                /*
+                    If the position value is less than the minus value of the total width of the carousel (that's a mouthful) then we know we would be going past the last slide if we were to animate now.
+                    So what we want to do here is reposition the carousel so the first slide (which is a clone of the last slide) is the visible slide and THEN we can start the animation.
+                 */
+                if (current_position < -(total_container_width - slide_dimensions.width)) {
+                    return false;
+                }
+
+                // Otherwise we'll return true so the calling function knows it can execute the required animation
+                return true;
+            }
+
+            /*
+             * Before we can animate the carousel we want to make sure it's in the correct position, 
+             * So for example: don't go backwards if we're on the first slide. Instead position to the last slide (which is a clone of the first) and then start the backwards animation.
+             * 
+             * @param show_previous {boolean} tells us whether the user wants to move forwards or backwards through the carousel
+             * @return undefined {undefined} no explicit return value
+             */
+            function reposition (show_previous) {
+                if (show_previous) {
+                    // Reposition to the last slide and reset the current position value
+                    carousel.css('left', -(total_container_width - slide_dimensions.width));
+                    current_position = -(total_container_width - slide_dimensions.width);
+                } else {
+                    // Reposition to the first slide and reset the current position value
+                    carousel.css('left', 0);
+                    current_position = 0;
+                }
+
+                /*
+                    Now we have repositioned the carousel we can animate the carousel.
+                    We have no event object to pass through so we just pass `null`.
+                 */
+                move(null, show_previous);
+            }
+
+            /*
              * Function that handles the movement of our carousel.
              * 
              * @param e {object} normalised event object
@@ -79,13 +134,19 @@
                 container.off('click');
 
                 // Determines if we're moving backwards or forwards and updates `current_position`
-                var direction = (show_previous) ? current_position -= slide_dimensions.width : current_position += slide_dimensions.width;
-                
-                carousel.animate({ 
-                    duration: 500,
-                    left: current_position,
-                    complete: setup_listeners
-                });
+                var direction = (show_previous) ? current_position += slide_dimensions.width : current_position -= slide_dimensions.width;
+
+                // Check if we're allowed to animate the carousel
+                if (check_movement(show_previous)) {
+                    carousel.animate({ 
+                        duration: 500,
+                        left: current_position,
+                        complete: setup_listeners
+                    });
+                } else {
+                    // Otherwise we need to reposition the carousel before animating (to make it look like it's seamlessly moving)
+                    reposition(show_previous);
+                }
             }
 
             /*
