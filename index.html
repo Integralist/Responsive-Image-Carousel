@@ -95,7 +95,12 @@
                 } 
 
                 /*
-                    If the position value is less than the minus value of the total width of the carousel (that's a mouthful) then we know we would be going past the last slide if we were to animate now.
+                    When this function is called, the `current_position` variable has already been updated to the next slides position.
+                    The purpose of this function is to just double check that moving to the next slide position (which is already stored in `current_position`) is OK still.
+                    
+                    So if the upcoming position value (which is a negative value as we're moving the carousel backwards) is less than the negative value of the total width of the carousel (i.e. further backwards), 
+                    then we would know that proceeding with the move to the next slide would cause us to show an empty space as there are no further slides to move to.
+                    
                     So what we want to do here is reposition the carousel so the first slide (which is a clone of the last slide) is the visible slide and THEN we can start the animation.
                  */
                 if (current_position < last_frame_position) {
@@ -198,7 +203,7 @@
                 slide_dimensions = slide.dim();
 
                 // Calculate new current_position
-                current_position = current_slide * slide_dimensions.width;
+                current_position = -(current_slide * slide_dimensions.width);
 
                 // Even though the containing carousel <ul> is what animates, we still need to loop through each slide and reposition them (as they are positioned absolutely horizontally)
                 slides.each(function (item, index) {
@@ -210,10 +215,13 @@
                 });
 
                 // Reposition the carousel based on it's new positioning
-                carousel.css('left', -current_position);
+                carousel.css('left', current_position);
 
                 // Update the total width of the carousel
                 total_container_width = slide_dimensions.width * slides.length;
+
+                // Update the last frame position value
+                last_frame_position = -(total_container_width - slide_dimensions.width);
 
                 /*
                 console.group('resize information');
@@ -231,7 +239,6 @@
             /*
                 TODO: 
 
-                - fix bug with pagination functionality breaking the direction the slides move in (they seem to jump around after resize/orientation change)
                 - make sure the pagination buttons resize with the viewport (at the moment they stay the same size as when seen on the full sized carousel)
                 - add touch interaction so not reliant on a mouse
                 - remove JS/DOM animation interaction for browsers that support CSS3 animations/transitions
