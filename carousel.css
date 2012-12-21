@@ -34,6 +34,7 @@
 /* The pagination is styled here but the HTML isn't inserted into the page until the required JavaScript has loaded */
 
 .carousel__pagination {
+    background: url(images/prev.png) 0 0 no-repeat;
     cursor: pointer;
     font-size: 2.5em;
     height: 50px;
@@ -43,11 +44,20 @@
     width: 50px;
 }
 
-.carousel__pagination--prev {
-    background: url(images/prev.png) 0 0 no-repeat;
+.carousel__pagination--next {
+    background-image: url(images/next.png);
+    right: 0;
 }
 
-.carousel__pagination--next {
-    background: url(images/next.png) 0 0 no-repeat;
-    right: 0;
+/* 
+    768px / 16px <body> font size = 48 
+    Applies to screen dimensions up to 768px
+ */
+@media (max-width: 48em) {
+    .carousel__pagination {
+        background-size: 30px;
+        height: 30px;
+        margin-top: -15px;
+        width: 30px;
+    }
 }
