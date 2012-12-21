@@ -22,19 +22,25 @@
             var container = $('.carousel');
             var carousel = $('.carousel__slides');
             var container_dimensions = container.dim(); // e.g. { height: 610, width: 960 }
-            var slide_dimensions = carousel.find('img').eq(0).dim(); // e.g. { height: 605, width: 960 }
-            var current_position = 0;
+            var slide = carousel.find('img').eq(0);
+            var slide_dimensions = slide.dim(); // e.g. { height: 605, width: 960 }
+            var previous_width = slide_dimensions.width; // we set this initially just in case the dimensions of the viewport change before the user has actually moved any slides 
+            var current_position = current_slide = 0;
             var slides, total_container_width, last_frame_position;
 
+            function insert_pagination(){
+                container.append('<span class="carousel__pagination carousel__pagination--prev"></span><span class="carousel__pagination carousel__pagination--next"></span>');
+
+                /*
+                    Here is a slightly more readable look at the pagination buttons HTML we're generating and appending to the carousel...
+
+                    <span class="carousel__pagination carousel__pagination--prev"></span>
+                    <span class="carousel__pagination carousel__pagination--next"></span>
+                 */
+            }
+
             // Insert our pagination buttons (these will move the carousel forward and backwards)
-            container.append('<span class="carousel__pagination carousel__pagination--prev">&#9664;</span><span class="carousel__pagination carousel__pagination--next">&#9654;</span>');
-
-            /*
-                Here is a slightly more readable look at the pagination buttons HTML we're generating and appending to the carousel...
-
-                <span class="carousel__pagination carousel__pagination--prev">&#9664;</span>
-                <span class="carousel__pagination carousel__pagination--next">&#9654;</span>
-             */
+            insert_pagination();
 
             // Here we're letting the CSS know JavaScript is enabled and so it can start applying JavaScript specific style changes
             carousel.addClass('carousel__slides--js');
@@ -112,10 +118,16 @@
                     // Reposition to the last slide and reset the current position value
                     carousel.css('left', last_frame_position);
                     current_position = last_frame_position;
+                    
+                    // Keep track of the current slide
+                    current_slide = slides.length-1;
                 } else {
                     // Reposition to the first slide and reset the current position value
                     carousel.css('left', 0);
                     current_position = 0;
+
+                    // Keep track of the current slide
+                    current_slide = 0;
                 }
 
                 /*
@@ -139,12 +151,22 @@
                 // Determines if we're moving backwards or forwards and updates `current_position`
                 var direction = (show_previous) ? current_position += slide_dimensions.width : current_position -= slide_dimensions.width;
 
+                // Store the previous dimensions (this is specifically for when the dimensions are changed via resize or orientation change)
+                previous_width = slide_dimensions.width;
+
+                // Keep track of the current slide
+                if (show_previous) {
+                    current_slide--;
+                } else {
+                    current_slide++;
+                }
+
                 // Check if we're allowed to animate the carousel
                 if (check_movement(show_previous)) {
                     carousel.animate({ 
                         duration: 500,
                         left: current_position,
-                        complete: setup_listeners
+                        complete: setup_interaction_listeners
                     });
                 } else {
                     // Otherwise we need to reposition the carousel before animating (to make it look like it's seamlessly moving)
@@ -160,18 +182,57 @@
              * 
              * @return undefined {undefined} no explicit return value
              */
-            function setup_listeners(){
+            function setup_interaction_listeners(){
                 container.on('click', '.carousel__pagination--prev', move, true);
                 container.on('click', '.carousel__pagination--next', move);
             }
 
             // Set-up the event listeners for the pagination buttons
-            setup_listeners();
+            setup_interaction_listeners();
+
+            // Set-up the event listeners for any orientation/viewport changes
+            $(window).on('resize orientationchange', function(){
+                //console.log('previous position', current_slide * previous_width);
+
+                // Reset all dimensional values
+                slide_dimensions = slide.dim();
+
+                // Calculate new current_position
+                current_position = current_slide * slide_dimensions.width;
+
+                // Even though the containing carousel <ul> is what animates, we still need to loop through each slide and reposition them (as they are positioned absolutely horizontally)
+                slides.each(function (item, index) {
+                    // Skip the first slide
+                    if (index > 0) {
+                        // Reposition each slide horizontally
+                        $(item).css('left', slide_dimensions.width * index);
+                    }
+                });
+
+                // Reposition the carousel based on it's new positioning
+                carousel.css('left', -current_position);
+
+                // Update the total width of the carousel
+                total_container_width = slide_dimensions.width * slides.length;
+
+                /*
+                console.group('resize information');
+                    console.log('total_container_width', total_container_width);
+                    console.log('carousel left position', carousel.css('left'));
+                    console.log('current_position', current_position);
+                    console.log('slide_dimensions', slide_dimensions);
+                console.groupEnd();
+                */
+
+                // Resize the height of the container to match the height of the image (which changes according to the size of the viewport)
+                container.height(slide_dimensions.height);
+            });
 
             /*
                 TODO: 
 
-                - values need to be updated when the screen is resized or orientation is changed (so check carousel is truly 'responsive')
+                - fix bug with pagination functionality breaking the direction the slides move in (they seem to jump around after resize/orientation change)
+                - make sure the pagination buttons resize with the viewport (at the moment they stay the same size as when seen on the full sized carousel)
                 - add touch interaction so not reliant on a mouse
                 - remove JS/DOM animation interaction for browsers that support CSS3 animations/transitions
              */

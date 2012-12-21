@@ -44,9 +44,10 @@
 }
 
 .carousel__pagination--prev {
-    margin-left: .3em; /* The font size pushes out more the 'next' arrow, which means we need to compensate here */
+    background: url(images/prev.png) 0 0 no-repeat;
 }
 
 .carousel__pagination--next {
+    background: url(images/next.png) 0 0 no-repeat;
     right: 0;
 }
